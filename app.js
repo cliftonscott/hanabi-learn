@@ -151,6 +151,7 @@ const drawPile = [
 let practice = clonePractice(initialPractice);
 let lessonIndex = 0;
 const themeStorageKey = "hanabi-learn-theme";
+const viewNames = ["rules", "tutorial", "practice", "strategy"];
 
 function card(color, rank) {
   return { color, rank };
@@ -191,13 +192,44 @@ function score() {
   return Object.values(practice.stacks).reduce((sum, value) => sum + value, 0);
 }
 
-function showView(viewName) {
+function viewFromHash() {
+  const requestedView = window.location.hash.replace("#", "");
+  return viewNames.includes(requestedView) ? requestedView : "rules";
+}
+
+function showView(viewName, options = {}) {
+  const nextView = viewNames.includes(viewName) ? viewName : "rules";
+  const { updateHash = true, focusHeading = false } = options;
+
   document.querySelectorAll(".view").forEach((view) => {
-    view.classList.toggle("active", view.id === `${viewName}-view`);
+    const isActive = view.id === `${nextView}-view`;
+    view.classList.toggle("active", isActive);
+    view.hidden = !isActive;
+    view.setAttribute("aria-hidden", String(!isActive));
   });
   document.querySelectorAll(".nav-button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.view === viewName);
+    const isActive = button.dataset.view === nextView;
+    button.classList.toggle("active", isActive);
+    if (isActive) {
+      button.setAttribute("aria-current", "page");
+    } else {
+      button.removeAttribute("aria-current");
+    }
   });
+  document.querySelector(`.nav-button[data-view="${nextView}"]`)?.scrollIntoView({
+    block: "nearest",
+    inline: "center"
+  });
+
+  if (updateHash && window.location.hash !== `#${nextView}`) {
+    window.history.pushState(null, "", `#${nextView}`);
+  }
+
+  if (focusHeading) {
+    const heading = document.querySelector(`#${nextView}-heading`);
+    heading?.setAttribute("tabindex", "-1");
+    heading?.focus({ preventScroll: true });
+  }
 }
 
 function applyThemePreference(preference) {
@@ -229,7 +261,8 @@ function renderTutorial() {
 
   progress.innerHTML = lessons.map((item, index) => {
     const status = index < lessonIndex ? "done" : index === lessonIndex ? "active" : "";
-    return `<button class="progress-step ${status}" type="button" data-lesson="${index}">${index + 1}. ${item.title}</button>`;
+    const current = index === lessonIndex ? ' aria-current="step"' : "";
+    return `<button class="progress-step ${status}" type="button" data-lesson="${index}" aria-label="Lesson ${index + 1}: ${item.title}"${current}>${index + 1}. ${item.title}</button>`;
   }).join("");
 
   panel.innerHTML = `
@@ -260,6 +293,17 @@ function renderPractice() {
   document.querySelector("#fuse-text").textContent = `${practice.fuses} / ${maxFuses}`;
   document.querySelector("#deck-text").textContent = String(practice.deckCount);
 
+  document.querySelectorAll(".table-stats > div").forEach((item) => {
+    item.classList.remove("highlight", "warning");
+  });
+  document.querySelector("#score-text").parentElement.classList.add("highlight");
+  if (practice.clues === 0) {
+    document.querySelector("#clue-text").parentElement.classList.add("warning");
+  }
+  if (practice.fuses <= 1) {
+    document.querySelector("#fuse-text").parentElement.classList.add("warning");
+  }
+
   document.querySelector("#fireworks").innerHTML = colors.map((color) => {
     const current = practice.stacks[color.id];
     const needed = current >= 5 ? "complete" : `${current + 1} next`;
@@ -267,7 +311,7 @@ function renderPractice() {
       `<span class="pip ${rank <= current ? "filled" : ""}"></span>`
     )).join("");
     return `
-      <article class="stack-card ${color.id}">
+      <article class="stack-card ${color.id}" aria-label="${color.label} firework is at ${current}; ${needed}">
         <div class="stack-top">
           <span class="stack-color">${color.label}</span>
           <span class="stack-needed">${needed}</span>
@@ -290,18 +334,51 @@ function renderPractice() {
 
   const you = practice.players.find((player) => player.id === "you");
   document.querySelector("#own-hand").innerHTML = you.hand.map((item, index) => renderCard(item, true, index)).join("");
+  renderSelectionSummary();
   renderClueForm();
   renderHistory();
   renderTips();
 }
 
+function renderSelectionSummary() {
+  const summary = document.querySelector("#selected-summary");
+  const playButton = document.querySelector("#play-card");
+  const discardButton = document.querySelector("#discard-card");
+  const item = selectedOwnCard();
+  const hasSelection = Boolean(item);
+
+  playButton.disabled = !hasSelection;
+  discardButton.disabled = !hasSelection;
+
+  if (!item) {
+    summary.innerHTML = "<span>Select one card from your hand to preview play and discard consequences.</span><span class=\"summary-status\">No card selected</span>";
+    return;
+  }
+
+  const status = isPlayable(item)
+    ? "Playable now"
+    : `${colorLabel(item.color)} needs ${nextNeeded(item.color)}`;
+  const discardRisk = item.rank === 5
+    ? "High discard risk: each 5 is unique."
+    : isPlayable(item)
+      ? "Discard risk: this card can score now."
+      : "Discard is legal only after a clue token is spent.";
+
+  summary.innerHTML = `<span><strong>${cardName(item)}</strong> selected. ${discardRisk}</span><span class="summary-status">${status}</span>`;
+}
+
 function renderCard(item, selectable, index = -1) {
   const selected = selectable && practice.selectedCard === index ? " selected" : "";
-  const attrs = selectable ? `button type="button" data-card-index="${index}"` : "div";
-  const close = selectable ? "button" : "div";
   const note = isPlayable(item) ? "playable" : `${colorLabel(item.color)} needs ${nextNeeded(item.color)}`;
+  const label = selectable
+    ? `Select ${cardName(item)}; ${note}${selected ? "; selected" : ""}`
+    : `${cardName(item)}; ${note}`;
+  const attrs = selectable
+    ? `button type="button" data-card-index="${index}" aria-pressed="${selected ? "true" : "false"}"`
+    : "div";
+  const close = selectable ? "button" : "div";
   return `
-    <${attrs} class="card ${item.color}${selectable ? " selectable" : ""}${selected}" aria-label="${cardName(item)}">
+    <${attrs} class="card ${item.color}${selectable ? " selectable" : ""}${selected}" aria-label="${label}">
       <span class="card-rank">${item.rank}</span>
       <span class="card-label">${colorLabel(item.color)}</span>
       <span class="card-note">${note}</span>
@@ -330,12 +407,49 @@ function renderClueForm() {
   if ([...value.options].some((option) => option.value === previousValue)) {
     value.value = previousValue;
   }
+  renderCluePreview();
+}
+
+function renderCluePreview() {
+  const target = document.querySelector("#clue-target");
+  const kind = document.querySelector("#clue-kind");
+  const value = document.querySelector("#clue-value");
+  const preview = document.querySelector("#clue-preview");
+  const player = practice.players.find((item) => item.id === target.value);
+
+  if (!player) {
+    preview.textContent = "Choose a partner to preview clue legality.";
+    preview.className = "clue-preview";
+    return;
+  }
+
+  const matches = player.hand.filter((item) => (
+    kind.value === "color" ? item.color === value.value : String(item.rank) === value.value
+  ));
+  const clueText = kind.value === "color" ? colorLabel(value.value) : value.value;
+
+  if (practice.clues <= 0) {
+    preview.textContent = "No clue tokens are available. Discarding can recover a token.";
+    preview.className = "clue-preview invalid";
+    return;
+  }
+
+  if (matches.length === 0) {
+    preview.textContent = `${player.name} has no ${clueText} cards. This would be an illegal zero-match clue.`;
+    preview.className = "clue-preview invalid";
+    return;
+  }
+
+  const touched = matches.map((item) => cardName(item)).join(", ");
+  const plural = matches.length === 1 ? "card" : "cards";
+  preview.textContent = `Legal preview: ${clueText} touches ${matches.length} ${plural}: ${touched}. Costs 1 clue token.`;
+  preview.className = "clue-preview valid";
 }
 
 function renderHistory() {
   const history = document.querySelector("#history-list");
   if (practice.history.length === 0) {
-    history.innerHTML = "<li>No moves yet.</li>";
+    history.innerHTML = "<li class=\"empty-history\"><strong>No moves yet</strong><span>Try a clue, a safe play, or a rejected bomb to build the table record.</span></li>";
     return;
   }
   history.innerHTML = practice.history.slice(-8).reverse().map((item) => `<li>${item}</li>`).join("");
@@ -351,10 +465,24 @@ function renderTips() {
   document.querySelector("#table-tips").innerHTML = tips.map((tip) => `<li>${tip}</li>`).join("");
 }
 
+function selectPanel(panelName) {
+  document.querySelectorAll(".panel-tab").forEach((tab) => {
+    const isActive = tab.dataset.panel === panelName;
+    tab.classList.toggle("active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+  });
+  document.querySelectorAll(".panel-body").forEach((panel) => {
+    const isActive = panel.id === `${panelName}-panel`;
+    panel.classList.toggle("active", isActive);
+    panel.hidden = !isActive;
+  });
+}
+
 function setFeedback(title, copy, note = "") {
   document.querySelector("#feedback-title").textContent = title;
   document.querySelector("#feedback-copy").textContent = copy;
   document.querySelector("#feedback-note").textContent = note || "Use this feedback to connect legality with table strategy.";
+  selectPanel("feedback");
 }
 
 function addHistory(message) {
@@ -495,11 +623,15 @@ function giveClue(event) {
 
 function bindEvents() {
   document.querySelectorAll(".nav-button").forEach((button) => {
-    button.addEventListener("click", () => showView(button.dataset.view));
+    button.addEventListener("click", () => showView(button.dataset.view, { focusHeading: true }));
   });
 
   document.querySelectorAll("[data-jump]").forEach((button) => {
-    button.addEventListener("click", () => showView(button.dataset.jump));
+    button.addEventListener("click", () => showView(button.dataset.jump, { focusHeading: true }));
+  });
+
+  window.addEventListener("hashchange", () => {
+    showView(viewFromHash(), { updateHash: false, focusHeading: true });
   });
 
   document.querySelector("#lesson-progress").addEventListener("click", (event) => {
@@ -542,6 +674,8 @@ function bindEvents() {
   document.querySelector("#discard-card").addEventListener("click", discardSelectedCard);
   document.querySelector("#clue-form").addEventListener("submit", giveClue);
   document.querySelector("#clue-kind").addEventListener("change", renderClueForm);
+  document.querySelector("#clue-target").addEventListener("change", renderCluePreview);
+  document.querySelector("#clue-value").addEventListener("change", renderCluePreview);
 
   document.querySelector("#reset-practice").addEventListener("click", () => {
     practice = clonePractice(initialPractice);
@@ -550,10 +684,7 @@ function bindEvents() {
   });
 
   document.querySelectorAll(".panel-tab").forEach((button) => {
-    button.addEventListener("click", () => {
-      document.querySelectorAll(".panel-tab").forEach((tab) => tab.classList.toggle("active", tab === button));
-      document.querySelectorAll(".panel-body").forEach((panel) => panel.classList.toggle("active", panel.id === `${button.dataset.panel}-panel`));
-    });
+    button.addEventListener("click", () => selectPanel(button.dataset.panel));
   });
 }
 
@@ -562,3 +693,4 @@ renderRulesStrategy();
 renderTutorial();
 renderPractice();
 bindEvents();
+showView(viewFromHash(), { updateHash: false });

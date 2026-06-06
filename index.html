@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hanabi Learn</title>
+    <meta name="description" content="A local-only Hanabi learning app with rules, guided lessons, interactive move practice, and beginner strategy examples.">
     <script>
       (() => {
         const preference = localStorage.getItem("hanabi-learn-theme") || "auto";
@@ -17,6 +18,7 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="app-shell">
       <header class="topbar">
         <div>
@@ -33,7 +35,7 @@
             </select>
           </label>
           <div class="status-chip" aria-label="Runs locally">
-            <span class="status-dot"></span>
+            <span class="status-dot" aria-hidden="true">&nbsp;</span>
             Local only
           </div>
         </div>
@@ -83,7 +85,7 @@
           </section>
         </aside>
 
-        <main class="content">
+        <main class="content" id="main-content" tabindex="-1">
           <section class="view active" id="rules-view" aria-labelledby="rules-heading">
             <div class="section-heading">
               <div>
@@ -196,12 +198,13 @@
                     <h3>You</h3>
                     <span>Choose a card, then play or discard.</span>
                   </div>
-                  <div class="hand" id="own-hand" aria-label="Your practice hand"></div>
+                  <div class="selected-summary" id="selected-summary" aria-live="polite"></div>
+                  <div class="hand own-hand" id="own-hand" aria-label="Your practice hand"></div>
                 </div>
 
                 <div class="action-bar">
-                  <button class="action-button play" id="play-card" type="button">Play selected</button>
-                  <button class="action-button discard" id="discard-card" type="button">Discard selected</button>
+                  <button class="action-button play" id="play-card" type="button" disabled>Play selected</button>
+                  <button class="action-button discard" id="discard-card" type="button" disabled>Discard selected</button>
                 </div>
 
                 <form class="clue-form" id="clue-form">
@@ -221,25 +224,26 @@
                     <select id="clue-value"></select>
                   </div>
                   <button class="primary-button" type="submit">Give clue</button>
+                  <div class="clue-preview" id="clue-preview" aria-live="polite"></div>
                 </form>
               </section>
 
               <aside class="feedback-panel" aria-live="polite">
-                <div class="panel-tabs" aria-label="Practice panel tabs">
-                  <button class="panel-tab active" data-panel="feedback" type="button">Feedback</button>
-                  <button class="panel-tab" data-panel="history" type="button">History</button>
-                  <button class="panel-tab" data-panel="tips" type="button">Tips</button>
+                <div class="panel-tabs" role="tablist" aria-label="Practice panel tabs">
+                  <button class="panel-tab active" id="feedback-tab" data-panel="feedback" type="button" role="tab" aria-selected="true" aria-controls="feedback-panel">Feedback</button>
+                  <button class="panel-tab" id="history-tab" data-panel="history" type="button" role="tab" aria-selected="false" aria-controls="history-panel">History</button>
+                  <button class="panel-tab" id="tips-tab" data-panel="tips" type="button" role="tab" aria-selected="false" aria-controls="tips-panel">Tips</button>
                 </div>
-                <div class="panel-body active" id="feedback-panel">
+                <div class="panel-body active" id="feedback-panel" role="tabpanel" aria-labelledby="feedback-tab">
                   <h3 id="feedback-title">Pick a move</h3>
                   <p id="feedback-copy">Select a card or create a clue to see whether the move is legal and why it matters.</p>
                   <div class="feedback-note" id="feedback-note">Beginner target: spend clues before blind discards.</div>
                 </div>
-                <div class="panel-body" id="history-panel">
+                <div class="panel-body" id="history-panel" role="tabpanel" aria-labelledby="history-tab" hidden>
                   <h3>Move history</h3>
                   <ol class="history-list" id="history-list"></ol>
                 </div>
-                <div class="panel-body" id="tips-panel">
+                <div class="panel-body" id="tips-panel" role="tabpanel" aria-labelledby="tips-tab" hidden>
                   <h3>Current table tips</h3>
                   <ul class="tip-list" id="table-tips"></ul>
                 </div>
