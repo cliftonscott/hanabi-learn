@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hanabi Learn</title>
+    <script>
+      (() => {
+        const preference = localStorage.getItem("hanabi-learn-theme") || "auto";
+        document.documentElement.dataset.themePreference = preference;
+        if (preference === "dark" || preference === "light") {
+          document.documentElement.dataset.theme = preference;
+        }
+      })();
+    </script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23f7f8fb'/%3E%3Cpath d='M32 9l5 17 17 5-17 5-5 17-5-17-17-5 17-5z' fill='%232563eb'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Hanabi Learn</h1>
+          <p>Local rules, guided practice, and beginner table strategy.</p>
+        </div>
+        <div class="topbar-actions">
+          <label class="theme-control" for="theme-select">
+            <span>Theme</span>
+            <select id="theme-select" aria-label="Theme">
+              <option value="auto">Auto</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+          <div class="status-chip" aria-label="Runs locally">
+            <span class="status-dot"></span>
+            Local only
+          </div>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside class="sidebar" aria-label="Main sections">
+          <nav class="section-nav">
+            <button class="nav-button active" data-view="rules" type="button">
+              <span class="nav-icon">R</span>
+              <span>
+                <strong>Rules</strong>
+                <small>Reference</small>
+              </span>
+            </button>
+            <button class="nav-button" data-view="tutorial" type="button">
+              <span class="nav-icon">T</span>
+              <span>
+                <strong>Tutorial</strong>
+                <small>Step by step</small>
+              </span>
+            </button>
+            <button class="nav-button" data-view="practice" type="button">
+              <span class="nav-icon">P</span>
+              <span>
+                <strong>Practice</strong>
+                <small>Try moves</small>
+              </span>
+            </button>
+            <button class="nav-button" data-view="strategy" type="button">
+              <span class="nav-icon">S</span>
+              <span>
+                <strong>Strategy</strong>
+                <small>Beginner primer</small>
+              </span>
+            </button>
+          </nav>
+
+          <section class="quick-card" aria-label="Hanabi basics">
+            <h2>Basics</h2>
+            <ul>
+              <li>Work together.</li>
+              <li>You cannot see your own hand at the table.</li>
+              <li>Clues must name one color or one rank.</li>
+              <li>Wrong plays spend fuses.</li>
+            </ul>
+          </section>
+        </aside>
+
+        <main class="content">
+          <section class="view active" id="rules-view" aria-labelledby="rules-heading">
+            <div class="section-heading">
+              <div>
+                <h2 id="rules-heading">Rules Reference</h2>
+                <p>Standard cooperative Hanabi, with v1 practice using 3 players and visible cards for learning.</p>
+              </div>
+              <button class="ghost-button" data-jump="practice" type="button">Practice these rules</button>
+            </div>
+
+            <div class="rules-grid">
+              <article class="rule-card">
+                <h3>Goal</h3>
+                <p>Build one firework stack per color from 1 to 5. The team score is the sum of the highest card in each stack, up to 25.</p>
+              </article>
+              <article class="rule-card">
+                <h3>Setup</h3>
+                <p>Use 5 colors. Each color has three 1s, two 2s, two 3s, two 4s, and one 5. Use 8 clue tokens and 3 fuse tokens.</p>
+              </article>
+              <article class="rule-card">
+                <h3>Hands</h3>
+                <p>Players hold cards facing away from themselves. With 2-3 players each hand has 5 cards. With 4-5 players each hand has 4 cards.</p>
+              </article>
+              <article class="rule-card">
+                <h3>Turn Actions</h3>
+                <p>On your turn, choose exactly one action: give a clue, discard one card, or play one card.</p>
+              </article>
+              <article class="rule-card">
+                <h3>Clues</h3>
+                <p>A clue must target another player, spend 1 clue token, name one color or one rank, and identify every matching card in that hand.</p>
+              </article>
+              <article class="rule-card">
+                <h3>Discards</h3>
+                <p>You may discard a card to regain 1 clue token, up to 8. If all 8 clue tokens are already available, discard is not a legal action.</p>
+              </article>
+              <article class="rule-card">
+                <h3>Playing Cards</h3>
+                <p>A card succeeds only if it is the next needed rank in its color stack. A failed play goes to the discard pile and costs 1 fuse.</p>
+              </article>
+              <article class="rule-card">
+                <h3>Game End</h3>
+                <p>The game ends when the team completes all fireworks, loses the last fuse, or the deck runs out and each player takes one final turn.</p>
+              </article>
+            </div>
+
+            <section class="score-band">
+              <h3>Scoring bands</h3>
+              <div class="score-row"><span>0-5</span><strong>Horrible</strong></div>
+              <div class="score-row"><span>6-10</span><strong>Mediocre</strong></div>
+              <div class="score-row"><span>11-15</span><strong>Honorable</strong></div>
+              <div class="score-row"><span>16-20</span><strong>Excellent</strong></div>
+              <div class="score-row"><span>21-24</span><strong>Amazing</strong></div>
+              <div class="score-row"><span>25</span><strong>Legendary</strong></div>
+            </section>
+          </section>
+
+          <section class="view" id="tutorial-view" aria-labelledby="tutorial-heading">
+            <div class="section-heading">
+              <div>
+                <h2 id="tutorial-heading">Guided Tutorial</h2>
+                <p>Short lessons that move from setup to practical first-table decisions.</p>
+              </div>
+              <button class="ghost-button" id="restart-tutorial" type="button">Restart</button>
+            </div>
+
+            <div class="tutorial-shell">
+              <div class="progress-strip" id="lesson-progress" aria-label="Tutorial progress"></div>
+              <article class="lesson-panel" id="lesson-panel"></article>
+              <div class="lesson-controls">
+                <button class="secondary-button" id="lesson-back" type="button">Back</button>
+                <button class="primary-button" id="lesson-next" type="button">Next</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="practice-view" aria-labelledby="practice-heading">
+            <div class="section-heading compact-heading">
+              <div>
+                <h2 id="practice-heading">Interactive Practice</h2>
+                <p>Teacher mode shows all cards. At a real table you would not see your own hand.</p>
+              </div>
+              <button class="ghost-button" id="reset-practice" type="button">Reset scenario</button>
+            </div>
+
+            <div class="practice-layout">
+              <section class="table-panel" aria-label="Practice table">
+                <div class="table-stats">
+                  <div>
+                    <span class="stat-label">Fireworks</span>
+                    <strong id="score-text">0 / 25</strong>
+                  </div>
+                  <div>
+                    <span class="stat-label">Clues</span>
+                    <strong id="clue-text">8 / 8</strong>
+                  </div>
+                  <div>
+                    <span class="stat-label">Fuses</span>
+                    <strong id="fuse-text">3 / 3</strong>
+                  </div>
+                  <div>
+                    <span class="stat-label">Deck</span>
+                    <strong id="deck-text">0</strong>
+                  </div>
+                </div>
+
+                <div class="fireworks" id="fireworks"></div>
+                <div class="partner-zone" id="partners"></div>
+
+                <div class="own-hand-wrap">
+                  <div class="hand-heading">
+                    <h3>You</h3>
+                    <span>Choose a card, then play or discard.</span>
+                  </div>
+                  <div class="hand" id="own-hand" aria-label="Your practice hand"></div>
+                </div>
+
+                <div class="action-bar">
+                  <button class="action-button play" id="play-card" type="button">Play selected</button>
+                  <button class="action-button discard" id="discard-card" type="button">Discard selected</button>
+                </div>
+
+                <form class="clue-form" id="clue-form">
+                  <div>
+                    <label for="clue-target">Target</label>
+                    <select id="clue-target"></select>
+                  </div>
+                  <div>
+                    <label for="clue-kind">Clue type</label>
+                    <select id="clue-kind">
+                      <option value="color">Color</option>
+                      <option value="rank">Rank</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="clue-value">Clue</label>
+                    <select id="clue-value"></select>
+                  </div>
+                  <button class="primary-button" type="submit">Give clue</button>
+                </form>
+              </section>
+
+              <aside class="feedback-panel" aria-live="polite">
+                <div class="panel-tabs" aria-label="Practice panel tabs">
+                  <button class="panel-tab active" data-panel="feedback" type="button">Feedback</button>
+                  <button class="panel-tab" data-panel="history" type="button">History</button>
+                  <button class="panel-tab" data-panel="tips" type="button">Tips</button>
+                </div>
+                <div class="panel-body active" id="feedback-panel">
+                  <h3 id="feedback-title">Pick a move</h3>
+                  <p id="feedback-copy">Select a card or create a clue to see whether the move is legal and why it matters.</p>
+                  <div class="feedback-note" id="feedback-note">Beginner target: spend clues before blind discards.</div>
+                </div>
+                <div class="panel-body" id="history-panel">
+                  <h3>Move history</h3>
+                  <ol class="history-list" id="history-list"></ol>
+                </div>
+                <div class="panel-body" id="tips-panel">
+                  <h3>Current table tips</h3>
+                  <ul class="tip-list" id="table-tips"></ul>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="view" id="strategy-view" aria-labelledby="strategy-heading">
+            <div class="section-heading">
+              <div>
+                <h2 id="strategy-heading">Strategy Primer</h2>
+                <p>Beginner conventions with concrete examples from the practice table.</p>
+              </div>
+              <button class="ghost-button" data-jump="practice" type="button">Try examples</button>
+            </div>
+
+            <div class="strategy-grid" id="strategy-grid"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

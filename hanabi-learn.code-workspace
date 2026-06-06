@@ -1,0 +1,54 @@
+{
+  "folders": [
+    {
+      "name": "Hanabi Learn",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.associations": {
+      "*.html": "html",
+      "*.css": "css",
+      "*.js": "javascript",
+      "*.md": "markdown"
+    },
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.exclude": {
+      "**/.DS_Store": true,
+      "**/node_modules": true
+    },
+    "search.exclude": {
+      "**/node_modules": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true
+    },
+    "terminal.integrated.cwd": "${workspaceFolder}"
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "openai.chatgpt"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Open Hanabi Learn",
+        "type": "shell",
+        "command": "open index.html",
+        "problemMatcher": []
+      },
+      {
+        "label": "Serve Hanabi Learn",
+        "type": "shell",
+        "command": "python3 -m http.server 5174",
+        "problemMatcher": [],
+        "isBackground": true
+      }
+    ]
+  }
+}
